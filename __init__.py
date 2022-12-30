@@ -138,7 +138,7 @@ def create_app(test_config=None):
                     {
                         "success": True,
                         "created": question.id,
-                        "books": current_questions,
+                        "questions": current_questions,
                         "total_questions": len(Question.query.all()),
                     }
                 )
