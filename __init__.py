@@ -8,6 +8,7 @@ from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
+
 def paginate_questions(request, selection):
     page = request.args.get("page", 1, type=int)
     start = (page - 1) * QUESTIONS_PER_PAGE
@@ -18,13 +19,12 @@ def paginate_questions(request, selection):
 
     return current_questions
 
+
 def create_app(test_config=None):
-    # create and configure the app
     app = Flask(__name__)
     setup_db(app)
-    #CORS(app)
     cors = CORS(app, resources={r"/": {"origins": "*"}})
-    
+
     @app.after_request
     def after_request(response):
         response.headers.add(
@@ -38,10 +38,9 @@ def create_app(test_config=None):
     @app.route("/categories")
     def retrieve_categories():
         categories = Category.query.all()
-        categories_dict={}
+        categories_dict = {}
         for category in categories:
             categories_dict[category.id] = category.type
-
 
         return jsonify(
             {
@@ -50,16 +49,16 @@ def create_app(test_config=None):
                 "total_categories": len(categories),
             }
         )
-    
+
     @app.route("/questions")
     def retrieve_questions():
         selection = Question.query.all()
-        current_questions = paginate_questions(request, selection) 
+        current_questions = paginate_questions(request, selection)
         categories = Category.query.all()
-        categories_dict={}
+        categories_dict = {}
         for category in categories:
             categories_dict[category.id] = category.type
-        
+
         return jsonify(
             {
                 "success": True,
@@ -69,11 +68,13 @@ def create_app(test_config=None):
                 "current_category": None
             }
         )
-    
+
     @app.route("/questions/<int:question_id>", methods=["DELETE"])
     def delete_question(question_id):
         try:
-            question = Question.query.filter(Question.id == question_id).one_or_none()
+            question = Question.query.filter(
+                Question.id == question_id
+                ).one_or_none()
 
             if question is None:
                 abort(404)
@@ -120,17 +121,16 @@ def create_app(test_config=None):
                     }
                 )
 
-
             except:
                 abort(422)
-                
+
         else:
-            
             try:
-
-                question = Question(question=new_question, answer=new_answer, category=new_category, difficulty=new_difficulty)
+                question = Question(
+                    question=new_question, answer=new_answer,
+                    category=new_category, difficulty=new_difficulty
+                    )
                 question.insert()
-
                 selection = Question.query.order_by(Question.id).all()
                 current_questions = paginate_questions(request, selection)
 
@@ -146,13 +146,14 @@ def create_app(test_config=None):
             except:
                 abort(422)
 
-
     @app.route('/categories/<int:id>/questions')
     def get_questions_on_category(id):
         category = Category.query.filter(Category.id==id).one_or_none()
 
         try:
-            selection = Question.query.filter(Question.category==category.id).all()
+            selection = Question.query.filter(
+                Question.category==category.id
+                ).all()
             current_questions = paginate_questions(request, selection)
 
             return jsonify({
@@ -164,8 +165,7 @@ def create_app(test_config=None):
 
         except:
             abort(422)
-            
-            
+
     @app.route('/quizzes', methods=["POST"])
     def post_quizzes():
         try:
@@ -174,22 +174,26 @@ def create_app(test_config=None):
             category = Category.query.get(category_id)
             previous_questions = data["previous_questions"]
             counter = 0
-            if category:  
+            if category:
                 if previous_questions:
                     questions = Question.query.filter(
                         Question.id.notin_(previous_questions),
                         Question.category == category.id
-                        ).all()  
+                        ).all()
                 else:
-                    questions = Question.query.filter(Question.category == category.id).all()
+                    questions = Question.query.filter(
+                        Question.category == category.id
+                        ).all()
             else:
                 if previous_questions:
-                    questions = Question.query.filter(Question.id.notin_(previous_questions)).all()  
+                    questions = Question.query.filter(
+                        Question.id.notin_(previous_questions)
+                        ).all()
                 else:
                     questions = Question.query.all()
-            question_length = len(questions)    
-                
-            if counter<question_length:               
+            question_length = len(questions)
+
+            if counter < question_length:
                 question = random.choice(questions).format()
                 counter = counter + 1
             else:
@@ -200,9 +204,7 @@ def create_app(test_config=None):
                 "question": question
             })
         except:
-            abort(500, "An error occured while trying to load the next question")
-
-    
+            abort(422)
 
     @app.errorhandler(404)
     def not_found(error):
@@ -221,10 +223,9 @@ def create_app(test_config=None):
     @app.errorhandler(400)
     def bad_request(error):
         return jsonify({"success": False, "error": 400, "message": "bad request"}), 400
-    
+
     @app.errorhandler(500)
     def bad_request(error):
         return jsonify({"success": False, "error": 500, "message": "HTTP 500 Internal Server Error"}), 400
-
 
     return app
