@@ -138,7 +138,7 @@ def create_app(test_config=None):
                     {
                         "success": True,
                         "created": question.id,
-                        "questions": current_questions,
+                        "books": current_questions,
                         "total_questions": len(Question.query.all()),
                     }
                 )
@@ -173,8 +173,9 @@ def create_app(test_config=None):
             category_id = int(data["quiz_category"]["id"])
             category = Category.query.get(category_id)
             previous_questions = data["previous_questions"]
-            if not category == None:  
-                if "previous_questions" in data and len(previous_questions) > 0:
+            counter = 0
+            if category:  
+                if previous_questions:
                     questions = Question.query.filter(
                         Question.id.notin_(previous_questions),
                         Question.category == category.id
@@ -182,15 +183,18 @@ def create_app(test_config=None):
                 else:
                     questions = Question.query.filter(Question.category == category.id).all()
             else:
-                if "previous_questions" in data and len(previous_questions) > 0:
+                if previous_questions:
                     questions = Question.query.filter(Question.id.notin_(previous_questions)).all()  
                 else:
-                        questions = Question.query.all()
-            max = len(questions) - 1
-            if max > 0:
-                question = questions[random.randint(0, max)].format()
+                    questions = Question.query.all()
+            question_length = len(questions)    
+                
+            if counter<question_length:               
+                question = random.choice(questions).format()
+                counter = counter + 1
             else:
                 question = False
+
             return jsonify({
                 "success": True,
                 "question": question
